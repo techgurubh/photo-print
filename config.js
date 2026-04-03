@@ -1,2 +1,2 @@
 // Put your remove.bg API key here
-const REMOVE_BG_API_KEY = "YOUR_API_KEY_HERE";
+const REMOVE_BG_API_KEY = "3mSiFgTnboUzoq2UawmqkiGS";
