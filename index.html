@@ -4,15 +4,26 @@
   <meta charset="UTF-8">
   <title>Passport Photo Printer</title>
   <link rel="stylesheet" href="style.css">
+
+  <!-- face-api -->
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
 </head>
 <body>
 
 <div class="container">
 
-  <!-- Upload Box -->
+  <!-- Upload -->
   <div id="uploadBox" class="upload-box">
     <p>Drag & Drop or Upload</p>
     <input type="file" id="fileInput" accept="image/*">
+  </div>
+
+  <!-- Copy Selector -->
+  <div class="copies">
+    <button onclick="setCopies(3)">3</button>
+    <button onclick="setCopies(6)">6</button>
+    <button onclick="setCopies(9)">9</button>
+    <button onclick="setCopies(12)">12</button>
   </div>
 
   <!-- Controls -->
@@ -21,9 +32,9 @@
     <button onclick="window.print()">Print</button>
   </div>
 
-  <!-- A4 Layout -->
-  <div class="a4" id="a4">
-    <div class="photo-grid" id="photoGrid"></div>
+  <!-- A4 -->
+  <div class="a4">
+    <div id="photoGrid" class="photo-grid"></div>
   </div>
 
 </div>
