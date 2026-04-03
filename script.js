@@ -1,34 +1,42 @@
 let selectedFile = null;
+let copies = 3;
 
 const fileInput = document.getElementById("fileInput");
-const photoGrid = document.getElementById("photoGrid");
+const grid = document.getElementById("photoGrid");
 
 fileInput.addEventListener("change", (e) => {
   selectedFile = e.target.files[0];
 });
 
-// STEP 1: Remove Background
+function setCopies(n) {
+  copies = n;
+}
+
+// LOAD face-api MODEL
+async function loadModels() {
+  await faceapi.nets.tinyFaceDetector.loadFromUri('./models');
+}
+
+// REMOVE BG
 async function removeBackground(file) {
   const formData = new FormData();
   formData.append("image_file", file);
 
-  const response = await fetch("https://api.remove.bg/v1.0/removebg", {
+  const res = await fetch("https://api.remove.bg/v1.0/removebg", {
     method: "POST",
-    headers: {
-      "X-Api-Key": REMOVE_BG_API_KEY
-    },
+    headers: { "X-Api-Key": REMOVE_BG_API_KEY },
     body: formData
   });
 
-  const blob = await response.blob();
+  const blob = await res.blob();
   return URL.createObjectURL(blob);
 }
 
-// STEP 2: Add Sky Blue Background
-function addBackground(imageUrl) {
+// ADD SKY BLUE BG
+function addBackground(url) {
   return new Promise((resolve) => {
     const img = new Image();
-    img.src = imageUrl;
+    img.src = url;
 
     img.onload = () => {
       const canvas = document.createElement("canvas");
@@ -36,37 +44,65 @@ function addBackground(imageUrl) {
       canvas.height = img.height;
 
       const ctx = canvas.getContext("2d");
-
-      // Sky blue background
       ctx.fillStyle = "#87CEEB";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.drawImage(img, 0, 0);
-
       resolve(canvas.toDataURL());
     };
   });
 }
 
-// STEP 3: Crop Passport Size
-function cropPassport(imageUrl) {
+// 🎯 FACE DETECTION + SMART PASSPORT CROP
+async function smartCrop(url) {
+  const img = new Image();
+  img.src = url;
+
+  await loadModels();
+
   return new Promise((resolve) => {
-    const img = new Image();
-    img.src = imageUrl;
+    img.onload = async () => {
 
-    img.onload = () => {
+      const detection = await faceapi.detectSingleFace(
+        img,
+        new faceapi.TinyFaceDetectorOptions()
+      );
+
+      if (!detection) {
+        alert("No face detected");
+        return;
+      }
+
+      const { x, y, width, height } = detection.box;
+
+      // 🔥 PASSPORT RULES
+      const cropWidth = width * 2.5;
+      const cropHeight = height * 3.2;
+
+      const startX = x - width * 0.75;
+      const startY = y - height * 1.2;
+
+      const DPI = 300;
+      const finalW = 300;   // 1 inch
+      const finalH = 360;   // 1.2 inch
+
       const canvas = document.createElement("canvas");
-
-      // Passport ratio 35x45
-      const width = 350;
-      const height = 450;
-
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = finalW;
+      canvas.height = finalH;
 
       const ctx = canvas.getContext("2d");
 
-      ctx.drawImage(img, 0, 0, width, height);
+      ctx.drawImage(
+        img,
+        startX,
+        startY,
+        cropWidth,
+        cropHeight,
+        0,
+        0,
+        finalW,
+        finalH
+      );
 
       resolve(canvas.toDataURL());
     };
@@ -76,32 +112,26 @@ function cropPassport(imageUrl) {
 // MAIN PROCESS
 async function processImage() {
   if (!selectedFile) {
-    alert("Please upload image");
+    alert("Upload image first");
     return;
   }
 
-  photoGrid.innerHTML = "";
+  grid.innerHTML = "";
 
   try {
-    // 1 Remove BG
-    const bgRemoved = await removeBackground(selectedFile);
+    const noBg = await removeBackground(selectedFile);
+    const blue = await addBackground(noBg);
+    const final = await smartCrop(blue);
 
-    // 2 Add Blue BG
-    const blueBg = await addBackground(bgRemoved);
-
-    // 3 Crop
-    const finalImage = await cropPassport(blueBg);
-
-    // 4 Add 3 Copies
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < copies; i++) {
       const div = document.createElement("div");
       div.className = "photo";
 
       const img = document.createElement("img");
-      img.src = finalImage;
+      img.src = final;
 
       div.appendChild(img);
-      photoGrid.appendChild(div);
+      grid.appendChild(div);
     }
 
   } catch (err) {
