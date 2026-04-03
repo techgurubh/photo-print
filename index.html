@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Passport Photo Printer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Upload Box -->
+  <div id="uploadBox" class="upload-box">
+    <p>Drag & Drop or Upload</p>
+    <input type="file" id="fileInput" accept="image/*">
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button onclick="processImage()">Process</button>
+    <button onclick="window.print()">Print</button>
+  </div>
+
+  <!-- A4 Layout -->
+  <div class="a4" id="a4">
+    <div class="photo-grid" id="photoGrid"></div>
+  </div>
+
+</div>
+
+<script src="config.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
